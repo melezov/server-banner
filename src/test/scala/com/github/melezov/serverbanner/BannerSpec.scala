@@ -1,21 +1,21 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
+import com.typesafe.scalalogging.StrictLogging
 import org.slf4j.LoggerFactory
 import org.specs2.Specification
 
 import scala.io.Source
 
-trait InfraSpec extends Specification {
-  protected val logger = LoggerFactory.getLogger(getClass)
+trait BannerSpec extends Specification with StrictLogging {
 
   // ### Utils ###
 
   def time[T](section: String)(runSection: => T): T = {
-    logger.trace(s"${section} started ...")
+    logger.trace(s"$section started ...")
     val startAt = System.currentTimeMillis
     val res = runSection
     val endAt = System.currentTimeMillis
-    logger.debug(s"${section} took ${endAt - startAt}ms ###")
+    logger.debug(s"$section took ${endAt - startAt}ms ###")
     res
   }
 
@@ -26,10 +26,10 @@ trait InfraSpec extends Specification {
 
   // ### Aliases ###
 
-  val Random = scala.util.Random
+  val Random: scala.util.Random.type = scala.util.Random
   type Random = scala.util.Random
 
-  val Result = org.specs2.execute.Result
+  val Result: org.specs2.execute.Result.type = org.specs2.execute.Result
 
   // ### Resources ###
 

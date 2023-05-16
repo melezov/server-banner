@@ -1,20 +1,19 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
 object Slant {
   val AllowedChars: Set[Char] =
     Set('-', '_') ++ ('A' to 'Z') ++ ('a' to 'z') ++ ('0' to '9')
 
   private[serverbanner] object Glyph {
-    final val Height = 6
-    final val OneMaxWidth = 13
-    final val TwoWidth = 23
+    final val Height: Int = 6
+    final val OneMaxWidth: Int = 13
+    private[this] val TwoWidth: Int = 23
 
     private[this] final val BufferRowLength = TwoWidth * AllowedChars.size + 1
-    private[this] val buffer: Array[Byte] = {
+    private[this] val buffer: Array[Char] = {
       val totalBufferLength = BufferRowLength * Height * (AllowedChars.size + 1)
-      new Array[Byte](totalBufferLength) ensuring { buffer =>
-        getClass.getResourceAsStream("slant.txt").read(buffer) == totalBufferLength
-      }
+      scala.io.Source.fromResource("com/github/melezov/serverbanner/slant.txt").toArray
+        .ensuring(_.length == totalBufferLength)
     }
 
     private[this] val lookup: Map[(Char, Option[Char]), Glyph] = {

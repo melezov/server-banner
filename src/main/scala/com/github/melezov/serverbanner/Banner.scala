@@ -1,43 +1,42 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
 import scala.collection.mutable.ArrayBuffer
 
-object Banner extends App {
-  val greeting = ColorText(Greeting("Pure  Scala  Server  MOTD  generator"), Color.Green)
-  val slant = ColorText(Slant("server-banner"), Color.Yellow)
-  val scroll = ColorText(Scroll(slant.width + 6, slant.height), Color.Red)
+object Banner {
+  def main(args: Array[String]): Unit = {
+    val greeting = ColorText(Greeting("Pure  Scala  Server  MOTD  generator"), Color.Green)
+    val slant = ColorText(Slant("server-banner"), Color.Yellow)
+    val scroll = ColorText(Scroll(slant.width + 6, slant.height), Color.Red)
 
-  val canvas = new Canvas(scroll.width, scroll.height)
-    .draw(Drawing(greeting, 8, 2, 0))
-    .draw(Drawing(slant,   11, 4, 1))
-    .draw(Drawing(scroll,   0, 0, 0))
+    val canvas = new Canvas(scroll.width, scroll.height)
+      .draw(Drawing(greeting, 8, 2, 0))
+      .draw(Drawing(slant, 11, 4, 1))
+      .draw(Drawing(scroll, 0, 0, 0))
 
-  println(canvas.renderText)
+    println(canvas)
+  }
 }
-
-sealed trait Color
-object Color {
-  case object Red extends Color
-  case object Yellow extends Color
-  case object Green extends Color
+enum Color {
+  case Red, Yellow, Green
 }
 
 case class ColorText(text: String, color: Color) {
-  val lines = text split '\n'
-  val height = lines.length
-  val width = lines.map(_.length).max
+  val lines: Seq[String] = text.split('\n').toIndexedSeq
+  val height: Int = lines.length
+  val width: Int = lines.map(_.length).max
 }
+
 case class Drawing(colorText: ColorText, x: Int, y: Int, z: Int)
 
 class Canvas(val width: Int, val height: Int) {
-  private[this] var drawings = new ArrayBuffer[Drawing]
+  private[this] val drawings = new ArrayBuffer[Drawing]
 
   def draw(drawing: Drawing): this.type = {
     drawings += drawing
     this
   }
 
-  def renderText: String = {
+  override def toString: String = {
     val buffer = Array.fill(width * height){' '}
 
     for (drawing <- drawings.sortBy(_.z)) {

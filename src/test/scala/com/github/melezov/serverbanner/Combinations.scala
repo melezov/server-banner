@@ -1,10 +1,10 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
 import scala.annotation.tailrec
 
-class Combinations(chars: String, depth: Int) extends Traversable[String] {
-  val length: Long = {
-    var sum = 0L
+class Combinations(chars: String, depth: Int) extends IndexedSeq[String] {
+  val length: Int = {
+    var sum = 0
     var level = 0
     while (level < depth) {
       sum = (sum + 1) * chars.length
@@ -26,30 +26,19 @@ class Combinations(chars: String, depth: Int) extends Traversable[String] {
     }
   }
 
-  def apply(idx: Long): String =
+  def apply(idx: Int): String =
     resolve(new StringBuilder, length, idx)
-
-  override def foreach[U](f: String => U): Unit = {
-    var i = 0L
-    val sb = new StringBuilder
-    while (i < length) {
-      sb.clear()
-      f(resolve(sb, length, i))
-      i += 1
-    }
-  }
 }
 
-/*
+/** Creates an input file for a Slant generator like Figlet / Toilet */
 object Combinations extends App {
   val Level = 3
   val Chars = Slant.AllowedChars.mkString.sorted
 
-  val os = new java.io.BufferedOutputStream(java.io.new FileOutputStream(s"${Level}-combinations.txt"))
+  val os = new java.io.BufferedOutputStream(new java.io.FileOutputStream(s"$Level-combinations.txt"))
   new Combinations(Chars, Level) foreach { line =>
     os.write(line getBytes "ISO-8859-1")
     os.write('\n')
   }
   os.close()
 }
-*/

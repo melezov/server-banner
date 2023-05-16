@@ -1,4 +1,4 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
 import scala.io.Source
 
@@ -47,11 +47,11 @@ object Scroll {
       if (ch == 's' || ch == 'u') {
         val rep = if (ch == 's') spaces else underscores
         var i = bodyWidth - 1
-        do {
+        while (i > 1) {
           val chunkSize = math.min(i, bufferSize)
           sb.append(rep, 0, chunkSize)
           i -= chunkSize
-        } while (i > 1)
+        }
       } else sb.append(ch)
     }
     sb.toString

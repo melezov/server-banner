@@ -1,9 +1,11 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
-class ScrollSpec extends InfraSpec {
+import org.specs2.execute.Result
+
+private class ScrollSpec extends BannerSpec {
   def is = s2"""
   Basics
-    0 x 0 fail      ${testDisallowed}
+    0 x 0 fail      $testDisallowed
 
     1 x 1 scroll    ${testScroll(1, 1)}
     5 x 2 scroll    ${testScroll(5, 2)}
@@ -18,16 +20,16 @@ class ScrollSpec extends InfraSpec {
 
   // ### Basics ###
 
-  def testDisallowed() =
+  def testDisallowed: Result =
     (Scroll(0, 1) must throwA(new IllegalArgumentException("requirement failed: Scroll body width must be positive, got: 0"))) and
     (Scroll(1, 0) must throwA(new IllegalArgumentException("requirement failed: Scroll body height must be positive, got: 0")))
 
-  def testScroll(bodyWidth: Int, bodyHeight: Int) =
-    Scroll(bodyWidth, bodyHeight) ==== getResourceAsString(s"scroll/${bodyWidth}x${bodyHeight}.txt")
+  def testScroll(bodyWidth: Int, bodyHeight: Int): Result =
+    Scroll(bodyWidth, bodyHeight) === getResourceAsString(s"scroll/${bodyWidth}x${bodyHeight}.txt")
 
   // ### Performance ###
 
-  def testSpeed(bodyWidth: Int, bodyHeight: Int) = {
+  def testSpeed(bodyWidth: Int, bodyHeight: Int): Result = {
     val reference = getResourceAsString("scroll/113x9.txt")
     val resizableHeight = reference.count(_ == '\n') - 3
 
@@ -36,6 +38,6 @@ class ScrollSpec extends InfraSpec {
     }
 
     val lengthDifference = bodyWidth - 113
-    render.length ==== (reference.length + lengthDifference * resizableHeight)
+    render.length === (reference.length + lengthDifference * resizableHeight)
   }
 }

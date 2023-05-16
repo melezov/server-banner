@@ -1,12 +1,12 @@
-package com.oradian.infra.serverbanner
+package com.github.melezov.serverbanner
 
 object Greeting {
   private[this] val transform = Map(
     ' ' -> " "
   , '\t' -> "  "
-  ).withDefault(_.toUpper + " ")
+  ).withDefault(ch => s"${ch.toUpper} ")
 
-  def apply(text: String) = {
+  def apply(text: String): String = {
     val sb = new StringBuilder
     for (ch <- text) {
       sb ++= transform(ch)
