@@ -1,43 +1,33 @@
 package com.github.melezov.serverbanner
 
-import com.typesafe.scalalogging.StrictLogging
-import org.specs2.Specification
-
 import scala.io.Source
 
-trait BannerSpec extends Specification with StrictLogging:
+abstract class BannerSuite extends munit.FunSuite:
 
-  // ### Utils ###
-
-  def time[T](section: String)(runSection: => T): T =
-    logger.trace(s"$section started ...")
-    val startAt = System.currentTimeMillis
-    val res = runSection
-    val endAt = System.currentTimeMillis
-    logger.debug(s"$section took ${endAt - startAt}ms ###")
-    res
+  def time[T](section: String)(body: => T): T =
+    val start = System.currentTimeMillis
+    val result = body
+    val elapsed = System.currentTimeMillis - start
+    println(s"$section took ${elapsed}ms")
+    result
 
   def format(number: Int): String =
-    java.text.NumberFormat
-      .getInstance(java.util.Locale.ROOT)
-      .format(number.toLong)
-
-  // ### Aliases ###
-
-  val Random: scala.util.Random.type = scala.util.Random
-  type Random = scala.util.Random
-
-  val Result: org.specs2.execute.Result.type = org.specs2.execute.Result
-
-  // ### Resources ###
+    val s = number.toString
+    val sb = StringBuilder()
+    var i = 0
+    for ch <- s do
+      if i > 0 && (s.length - i) % 3 == 0 then sb += ','
+      sb += ch
+      i += 1
+    sb.toString
 
   private def sourceFrom(resource: String) =
-    Source.fromInputStream(getClass.getResourceAsStream(resource))
+    Source.fromFile(s"src/test/resources/com/github/melezov/serverbanner/$resource")
 
-  protected def getResourceAsString(resource: String): String =
+  def getResourceAsString(resource: String): String =
     val source = sourceFrom(resource)
     try new String(source.toArray) finally source.close()
 
-  protected def getResourceAsLines(resource: String): Iterator[String] =
+  def getResourceAsLines(resource: String): Iterator[String] =
     val source = sourceFrom(resource)
     try source.getLines().toList.iterator finally source.close()

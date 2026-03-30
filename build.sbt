@@ -1,19 +1,23 @@
+enablePlugins(ScalaNativePlugin)
+
 organization := "com.github.melezov"
 name := "server-banner"
 version := "0.0.4-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "org.specs2"                 %% "specs2-core"     % "5.6.4"  % Test,
-  "com.typesafe.scala-logging" %% "scala-logging"   % "3.9.5"  % Test,
-  "ch.qos.logback"             %  "logback-classic" % "1.5.32" % Test,
+  "org.scalameta" %%% "munit" % "1.1.0" % Test,
 )
 
-scalaVersion := "3.8.2"
+testFrameworks += new TestFramework("munit.Framework")
+
+scalaVersion := "3.8.1"
 scalacOptions ++= Seq(
   "-deprecation",
   "-encoding", "UTF-8",
   "-unchecked",
   "-explain",
 )
+
+EmbedResources.settings
 
 Global / onChangedBuildSource := ReloadOnSourceChanges

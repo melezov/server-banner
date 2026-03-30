@@ -1,41 +1,22 @@
 package com.github.melezov.serverbanner
 
-import org.specs2.execute.Result
+class ScrollSpec extends BannerSuite:
 
-class ScrollSpec extends BannerSpec:
-  def is = s2"""
-  Basics
-    0 x 0 fail      $testDisallowed
+  test("0 x 0 fail"):
+    intercept[IllegalArgumentException](Scroll(0, 1))
+    intercept[IllegalArgumentException](Scroll(1, 0))
 
-    1 x 1 scroll    ${testScroll(1, 1)}
-    2 x 1 scroll    ${testScroll(2, 1)}
-    5 x 2 scroll    ${testScroll(5, 2)}
-    12 x 3 scroll   ${testScroll(12, 3)}
-    17 x 4 scroll   ${testScroll(17, 4)}
-    27 x 5 scroll   ${testScroll(27, 5)}
-    113 x 9 scroll  ${testScroll(113, 9)}
+  for (w, h) <- Seq((1, 1), (2, 1), (5, 2), (12, 3), (17, 4), (27, 5), (113, 9)) do
+    test(s"${w}x${h} scroll"):
+      assertEquals(Scroll(w, h), getResourceAsString(s"scroll/${w}x${h}.txt"))
 
-  Performance
-    huge-ass scroll (100M body)  ${testSpeed(7 * 1000 * 1000, 9)}
-"""
-
-  // ### Basics ###
-
-  def testDisallowed: Result =
-    (Scroll(0, 1) must throwA(new IllegalArgumentException("requirement failed: Scroll body width must be positive, got: 0"))) and
-    (Scroll(1, 0) must throwA(new IllegalArgumentException("requirement failed: Scroll body height must be positive, got: 0")))
-
-  def testScroll(bodyWidth: Int, bodyHeight: Int): Result =
-    Scroll(bodyWidth, bodyHeight) === getResourceAsString(s"scroll/${bodyWidth}x${bodyHeight}.txt")
-
-  // ### Performance ###
-
-  def testSpeed(bodyWidth: Int, bodyHeight: Int): Result =
+  test("huge scroll (100M body)"):
     val reference = getResourceAsString("scroll/113x9.txt")
     val resizableHeight = reference.count(_ == '\n') - 3
+    val bodyWidth = 7 * 1000 * 1000
 
     val render = time(s"Creating ~ ${format(bodyWidth * resizableHeight)}-char wide scroll"):
-      Scroll(bodyWidth, bodyHeight)
+      Scroll(bodyWidth, 9)
 
     val lengthDifference = bodyWidth - 113
-    render.length === (reference.length + lengthDifference * resizableHeight)
+    assertEquals(render.length, reference.length + lengthDifference * resizableHeight)

@@ -12,8 +12,7 @@ object Slant:
     private final val BufferRowLength = TwoWidth * AllowedChars.size + 1
     private val buffer: Array[Char] =
       val totalBufferLength = BufferRowLength * Height * (AllowedChars.size + 1)
-      val source = scala.io.Source.fromResource("com/github/melezov/serverbanner/slant.txt")
-      try source.toArray.ensuring(_.length == totalBufferLength) finally source.close()
+      EmbeddedResources.slantBuffer.ensuring(_.length == totalBufferLength)
 
     private val lookup: Map[(Char, Option[Char]), Glyph] =
       val chars = AllowedChars.toIndexedSeq.sorted

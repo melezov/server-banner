@@ -1,11 +1,7 @@
 package com.github.melezov.serverbanner
 
-import scala.io.Source
-
 object Scroll:
-  private val template: String =
-    val source = Source.fromInputStream(getClass.getResourceAsStream("scroll.txt"))
-    try new String(source.toArray) finally source.close()
+  private val template: String = EmbeddedResources.scrollTemplate
 
   private final val Row = "\n|       |"
 
