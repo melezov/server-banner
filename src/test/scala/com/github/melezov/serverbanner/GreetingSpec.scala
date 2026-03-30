@@ -2,7 +2,7 @@ package com.github.melezov.serverbanner
 
 import org.specs2.execute.Result
 
-class GreetingSpec extends BannerSpec {
+class GreetingSpec extends BannerSpec:
   def is = s2"""
   Basics
     empty greeting  $testEmpty
@@ -20,4 +20,3 @@ class GreetingSpec extends BannerSpec {
 
   def testWhitespace: Result =
     Greeting("I am\tTAB\tto meet you!") === "I  A M   T A B   T O  M E E T  Y O U !\n"
-}

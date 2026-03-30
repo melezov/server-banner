@@ -1,23 +1,21 @@
 package com.github.melezov.serverbanner
 
 import com.typesafe.scalalogging.StrictLogging
-import org.slf4j.LoggerFactory
 import org.specs2.Specification
 
 import scala.io.Source
 
-trait BannerSpec extends Specification with StrictLogging {
+trait BannerSpec extends Specification with StrictLogging:
 
   // ### Utils ###
 
-  def time[T](section: String)(runSection: => T): T = {
+  def time[T](section: String)(runSection: => T): T =
     logger.trace(s"$section started ...")
     val startAt = System.currentTimeMillis
     val res = runSection
     val endAt = System.currentTimeMillis
     logger.debug(s"$section took ${endAt - startAt}ms ###")
     res
-  }
 
   def format(number: Int): String =
     java.text.NumberFormat
@@ -41,4 +39,3 @@ trait BannerSpec extends Specification with StrictLogging {
 
   protected def getResourceAsLines(resource: String): Iterator[String] =
     sourceFrom(resource).getLines
-}

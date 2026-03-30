@@ -1,16 +1,13 @@
 package com.github.melezov.serverbanner
 
-object Greeting {
+object Greeting:
   private val transform = Map(
-    ' ' -> " "
-  , '\t' -> "  "
+    ' ' -> " ",
+    '\t' -> "  ",
   ).withDefault(ch => s"${ch.toUpper} ")
 
-  def apply(text: String): String = {
-    val sb = new StringBuilder
-    for (ch <- text) {
+  def apply(text: String): String =
+    val sb = StringBuilder()
+    for ch <- text do
       sb ++= transform(ch)
-    }
     sb.toString.trim + "\n"
-  }
-}

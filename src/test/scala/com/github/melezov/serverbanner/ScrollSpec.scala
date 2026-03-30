@@ -2,7 +2,7 @@ package com.github.melezov.serverbanner
 
 import org.specs2.execute.Result
 
-private class ScrollSpec extends BannerSpec {
+private class ScrollSpec extends BannerSpec:
   def is = s2"""
   Basics
     0 x 0 fail      $testDisallowed
@@ -29,15 +29,12 @@ private class ScrollSpec extends BannerSpec {
 
   // ### Performance ###
 
-  def testSpeed(bodyWidth: Int, bodyHeight: Int): Result = {
+  def testSpeed(bodyWidth: Int, bodyHeight: Int): Result =
     val reference = getResourceAsString("scroll/113x9.txt")
     val resizableHeight = reference.count(_ == '\n') - 3
 
-    val render = time(s"Creating ~ ${format(bodyWidth * resizableHeight)}-char wide scroll") {
+    val render = time(s"Creating ~ ${format(bodyWidth * resizableHeight)}-char wide scroll"):
       Scroll(bodyWidth, bodyHeight)
-    }
 
     val lengthDifference = bodyWidth - 113
     render.length === (reference.length + lengthDifference * resizableHeight)
-  }
-}
