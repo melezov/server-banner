@@ -1,44 +1,81 @@
 package com.github.melezov.serverbanner
 
+import Main.{Action, ColorMode, Config}
+
 class BannerCliSpec extends BannerSuite:
 
   // ### Argument parsing ###
 
-  test("no arguments returns None"):
-    assertEquals(Main.parseArgs(Array.empty), Right(None))
+  test("no arguments returns error"):
+    assert(Main.parseArgs(Array.empty).isLeft)
 
   test("banner text only"):
-    assertEquals(Main.parseArgs(Array("HT-California-02")), Right(Some(Main.Config("HT-California-02", None, true))))
+    assertEquals(Main.parseArgs(Array("HT-California-02")), Right(Action.Run(Config("HT-California-02", None, ColorMode.Auto))))
 
   test("banner text with --greeting"):
     assertEquals(
       Main.parseArgs(Array("--greeting", "Plenty of room at the", "HT-California-02")),
-      Right(Some(Main.Config("HT-California-02", Some("Plenty of room at the"), true))),
+      Right(Action.Run(Config("HT-California-02", Some("Plenty of room at the"), ColorMode.Auto))),
     )
 
   test("banner text with -g shorthand"):
     assertEquals(
       Main.parseArgs(Array("-g", "Such a lovely place", "HT-California-02")),
-      Right(Some(Main.Config("HT-California-02", Some("Such a lovely place"), true))),
+      Right(Action.Run(Config("HT-California-02", Some("Such a lovely place"), ColorMode.Auto))),
     )
 
   test("greeting after banner text"):
     assertEquals(
       Main.parseArgs(Array("HT-California-02", "--greeting", "You can check out any time you like")),
-      Right(Some(Main.Config("HT-California-02", Some("You can check out any time you like"), true))),
+      Right(Action.Run(Config("HT-California-02", Some("You can check out any time you like"), ColorMode.Auto))),
     )
 
-  // ### --no-color ###
+  // ### --color flag ###
 
-  test("--no-color disables color"):
+  test("--color off disables color"):
     assertEquals(
-      Main.parseArgs(Array("--no-color", "HT-California-02")),
-      Right(Some(Main.Config("HT-California-02", None, false))),
+      Main.parseArgs(Array("--color", "off", "HT-California-02")),
+      Right(Action.Run(Config("HT-California-02", None, ColorMode.Off))),
     )
 
-  test("default is color enabled"):
-    val Right(Some(config)) = Main.parseArgs(Array("HT-California-02")): @unchecked
-    assertEquals(config.color, true)
+  test("--color on enables color"):
+    assertEquals(
+      Main.parseArgs(Array("--color", "on", "HT-California-02")),
+      Right(Action.Run(Config("HT-California-02", None, ColorMode.On))),
+    )
+
+  test("--color auto is the default"):
+    assertEquals(
+      Main.parseArgs(Array("--color", "auto", "HT-California-02")),
+      Right(Action.Run(Config("HT-California-02", None, ColorMode.Auto))),
+    )
+
+  test("default color mode is Auto"):
+    val Right(Action.Run(config)) = Main.parseArgs(Array("HT-California-02")): @unchecked
+    assertEquals(config.colorMode, ColorMode.Auto)
+
+  test("invalid --color value"):
+    assert(Main.parseArgs(Array("--color", "maybe", "HT-California-02")).isLeft)
+
+  test("--color without value"):
+    assert(Main.parseArgs(Array("--color")).isLeft)
+
+  test("--help with --color off"):
+    assertEquals(
+      Main.parseArgs(Array("--color", "off", "--help")),
+      Right(Action.Help(ColorMode.Off)),
+    )
+
+  test("--help returns Help with Auto color"):
+    assertEquals(Main.parseArgs(Array("--help")), Right(Action.Help(ColorMode.Auto)))
+
+  // ### resolveColor ###
+
+  test("resolveColor On always returns true"):
+    assertEquals(Main.resolveColor(ColorMode.On), true)
+
+  test("resolveColor Off always returns false"):
+    assertEquals(Main.resolveColor(ColorMode.Off), false)
 
   // ### Error cases ###
 
@@ -72,7 +109,7 @@ class BannerCliSpec extends BannerSuite:
 
   // ### Color output ###
 
-  test("--no-color has no escape codes"):
+  test("color off has no escape codes"):
     val output = Banner.render("HT-California-02", Some("Mirrors on the ceiling"), false)
     assert(!output.contains("\u001b"), "no-color mode should not contain escape codes")
 
@@ -88,3 +125,20 @@ class BannerCliSpec extends BannerSuite:
     val output = Banner.render("HT-California-02", None, true)
     val redCount = "\u001b\\[31m".r.findAllIn(output).length
     assert(redCount < output.count(_ == '|'), "should not emit red escape for every red character")
+
+  // ### Help output ###
+
+  test("plain help has no escape codes"):
+    val output = Main.help(false)
+    assert(!output.contains("\u001b"), "plain help should not contain escape codes")
+    assert(output.contains("--color <auto|on|off>"), "should document --color flag")
+    assert(output.contains(EmbeddedResources.version), "should contain version")
+    assert(output.contains("https://github.com/github/melezov/server-banner"), "should contain project URL")
+
+  test("colored help has ANSI escape codes"):
+    val output = Main.help(true)
+    assert(output.contains("\u001b["), "colored help should contain ANSI escape codes")
+    assert(output.contains("--color <auto|on|off>"), "should document --color flag")
+    assert(output.contains(Color.Yellow.ansiCode), "should contain yellow for headers")
+    assert(output.contains(Color.Green.ansiCode), "should contain green for options")
+    assert(output.contains(EmbeddedResources.version), "should contain version")

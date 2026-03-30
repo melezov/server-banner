@@ -28,6 +28,7 @@ object EmbedResources {
 
       val scrollContent = IO.read(resourceDir / "scroll.txt")
       val slantContent = IO.read(resourceDir / "slant.txt")
+      val projectVersion = version.value
 
       val outFile = outputDir / "EmbeddedResources.scala"
       val q = "\""
@@ -35,6 +36,12 @@ object EmbedResources {
       val sb = new java.lang.StringBuilder()
       sb.append("package com.github.melezov.serverbanner\n\n")
       sb.append("private[serverbanner] object EmbeddedResources:\n")
+
+      sb.append("  val version: String =\n    ")
+      sb.append(q)
+      sb.append(escape(projectVersion))
+      sb.append(q)
+      sb.append("\n\n")
 
       sb.append("  val scrollTemplate: String =\n    ")
       sb.append(q)

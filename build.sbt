@@ -8,15 +8,37 @@ nativeConfig ~= {
     .withGC(GC.immix)
 }
 
-val upxPack = taskKey[File]("Compress the native binary with UPX")
-upxPack := {
-  val binary = (Compile / nativeLink).value
-  import scala.sys.process.*
-  val log = streams.value.log
-  log.info(s"UPX compressing ${binary.getName} ...")
-  val output = Process(Seq("upx", "--best", "--force", binary.getAbsolutePath)).!!
-  log.info(output.trim)
-  binary
+commands += Command.command("release") { state0 =>
+  val extracted = Project.extract(state0)
+  val releaseState = extracted.appendWithoutSession(Seq(
+    nativeConfig ~= { _.withMode(Mode.releaseSize).withLTO(LTO.thin) }
+  ), state0)
+
+  val log = extracted.get(sLog)
+  val releaseExtracted = Project.extract(releaseState)
+  val (state1, binary) = releaseExtracted.runTask(Compile / nativeLink, releaseState)
+
+  {
+    import scala.sys.process._
+    try {
+      log.info(s"UPX compressing ${binary.getName} ...")
+      val output = Process(Seq("upx", "--best", binary.getAbsolutePath)).!!
+      log.info(output.trim)
+    } catch {
+      case e: java.io.IOException =>
+        log.warn("UPX not found on PATH, skipping compression")
+      case e: RuntimeException =>
+        log.warn(s"UPX failed: ${e.getMessage.linesIterator.next()}")
+    }
+  }
+
+  val releaseDir = extracted.get(baseDirectory) / "release"
+  sbt.IO.createDirectory(releaseDir)
+  val dest = releaseDir / binary.getName
+  sbt.IO.copyFile(binary, dest)
+  log.success(s"Release binary: ${dest.getAbsolutePath}")
+
+  state1
 }
 
 organization := "com.github.melezov"

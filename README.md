@@ -28,11 +28,8 @@ Requires [SBT](https://www.scala-sbt.org/) and [LLVM/Clang](https://scala-native
 # Debug build (fast compilation)
 sbt nativeLink
 
-# Release build (optimized for size)
-sbt 'set nativeConfig ~= { _.withMode(scala.scalanative.build.Mode.releaseSize).withLTO(scala.scalanative.build.LTO.thin) }' nativeLink
-
-# Release build + UPX compression (requires upx on PATH)
-sbt upxPack
+# Release build (optimized for size, UPX compressed if available)
+sbt release
 ```
 
 The binary is produced at `target/scala-3.8.1/server-banner`.
@@ -63,7 +60,7 @@ Arguments:
   <banner-text>            Text to render as ASCII art banner
 
 Options:
-  -g, --greeting <text>    Greeting text displayed above the banner
+  --greeting <text>        Greeting text displayed above the banner
 
 Examples:
   server-banner My-Server
@@ -79,7 +76,7 @@ The server banner can be displayed when users log into a Linux server via SSH.
 Cross-compile on Linux (or build directly on the target server):
 
 ```bash
-sbt upxPack
+sbt release
 ```
 
 ### 2. Copy to the server

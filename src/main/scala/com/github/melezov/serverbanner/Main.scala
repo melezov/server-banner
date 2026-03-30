@@ -1,29 +1,47 @@
 package com.github.melezov.serverbanner
 
-object Main:
-  case class Config(bannerText: String, greeting: Option[String], color: Boolean)
+import scala.scalanative.posix.unistd
 
-  def parseArgs(args: Array[String]): Either[String, Option[Config]] =
+object Main:
+  enum ColorMode:
+    case Auto, On, Off
+
+  case class Config(bannerText: String, greeting: Option[String], colorMode: ColorMode)
+
+  sealed trait Action
+  object Action:
+    case class Run(config: Config) extends Action
+    case class Help(colorMode: ColorMode) extends Action
+
+  def parseArgs(args: Array[String]): Either[String, Action] =
     args match
       case Array() =>
-        Right(None)
+        Left("Missing banner text argument. Use --help for usage information")
       case _ =>
         var greeting = Option.empty[String]
         var bannerText = Option.empty[String]
-        var color = true
+        var colorMode = ColorMode.Auto
+        var help = false
         var i = 0
         while i < args.length do
           args(i) match
-            case "--greeting" | "-g" =>
+            case "--greeting" =>
               if i + 1 >= args.length then
                 return Left("Missing value for --greeting")
               greeting = Some(args(i + 1))
               i += 2
-            case "--no-color" =>
-              color = false
-              i += 1
+            case "--color" =>
+              if i + 1 >= args.length then
+                return Left("Missing value for --color")
+              args(i + 1) match
+                case "auto" => colorMode = ColorMode.Auto
+                case "on"   => colorMode = ColorMode.On
+                case "off"  => colorMode = ColorMode.Off
+                case other  => return Left(s"Invalid value for --color: $other (expected: auto, on, off)")
+              i += 2
             case "--help" =>
-              return Right(None)
+              help = true
+              i += 1
             case arg if arg.startsWith("-") =>
               return Left(s"Unknown option: $arg")
             case arg =>
@@ -31,36 +49,57 @@ object Main:
                 return Left(s"Unexpected argument: $arg")
               bannerText = Some(arg)
               i += 1
-        bannerText match
-          case Some(text) => Right(Some(Config(text, greeting, color)))
-          case None => Left("Missing banner text argument")
+        if help then
+          Right(Action.Help(colorMode))
+        else
+          bannerText match
+            case Some(text) => Right(Action.Run(Config(text, greeting, colorMode)))
+            case None => Left("Missing banner text argument")
 
-  val help: String =
-    """Usage: server-banner [OPTIONS] <banner-text>
-      |
-      |Arguments:
-      |  <banner-text>            Text to render as ASCII art banner
-      |
-      |Options:
-      |  -g, --greeting <text>    Greeting text displayed above the banner
-      |  --no-color               Disable ANSI color output
-      |  --help                   Show this help message
-      |
-      |Examples:
-      |  server-banner My-Server
-      |  server-banner --greeting 'Such  a  *lovely*  place' HT-California-02
-      |  server-banner --no-color My-Server""".stripMargin
+  def resolveColor(mode: ColorMode, fd: Int = 1): Boolean = mode match
+    case ColorMode.On  => true
+    case ColorMode.Off => false
+    case ColorMode.Auto =>
+      val noColor = System.getenv("NO_COLOR")
+      val term = System.getenv("TERM")
+      if noColor != null then false
+      else if term == "dumb" then false
+      else unistd.isatty(fd) != 0
+
+  def help(color: Boolean): String =
+    def h(s: String) = if color then s"${Color.Yellow.ansiCode}$s${Color.AnsiReset}" else s
+    def o(s: String) = if color then s"${Color.Green.ansiCode}$s${Color.AnsiReset}" else s
+    s"""${h("server-banner")} ${EmbeddedResources.version}
+       |${h("https://github.com/github/melezov/server-banner")}
+       |
+       |${h("Usage:")} server-banner [OPTIONS] <banner-text>
+       |
+       |${h("Arguments:")}
+       |  <banner-text>            Text to render as ASCII art banner
+       |
+       |${h("Options:")}
+       |  ${o("-g, --greeting <text>")}    Greeting text displayed above the banner
+       |  ${o("--color <auto|on|off>")}    Color output mode (default: auto)
+       |  ${o("--help")}                   Show this help message
+       |
+       |${h("Examples:")}
+       |  server-banner My-Server
+       |  server-banner --greeting 'Such  a  *lovely*  place' HT-California-02
+       |  server-banner --color off My-Server""".stripMargin
 
   def main(args: Array[String]): Unit =
     parseArgs(args) match
-      case Right(Some(config)) =>
-        print(Banner.render(config.bannerText, config.greeting, config.color))
-      case Right(None) =>
-        print(Banner.render(Banner.DefaultBannerText, Some(Banner.DefaultGreeting), true))
+      case Right(Action.Run(config)) =>
+        val color = resolveColor(config.colorMode)
+        print(Banner.render(config.bannerText, config.greeting, color))
+      case Right(Action.Help(colorMode)) =>
+        val color = resolveColor(colorMode)
+        print(Banner.render(Banner.DefaultBannerText, Some(Banner.DefaultGreeting), color))
         println()
-        println(help)
+        println(help(color))
       case Left(error) =>
+        val color = resolveColor(ColorMode.Auto, fd = 2)
         System.err.println(s"Error: $error")
         System.err.println()
-        System.err.println(help)
+        System.err.println(help(color))
         sys.exit(1)
