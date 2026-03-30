@@ -4,6 +4,8 @@ import scala.io.Source
 
 abstract class BannerSuite extends munit.FunSuite:
 
+  // ### Utils ###
+
   def time[T](section: String)(body: => T): T =
     val start = System.currentTimeMillis
     val result = body
@@ -20,6 +22,8 @@ abstract class BannerSuite extends munit.FunSuite:
       sb += ch
       i += 1
     sb.toString
+
+  // ### Resources ###
 
   private def sourceFrom(resource: String) =
     Source.fromFile(s"src/test/resources/com/github/melezov/serverbanner/$resource")

@@ -2,17 +2,29 @@ package com.github.melezov.serverbanner
 
 import scala.collection.mutable.ArrayBuffer
 
-@main def banner(): Unit =
-  val greeting = ColorText(Greeting("Pure  Scala  Server  MOTD  generator"), Color.Green)
-  val slant = ColorText(Slant("server-banner"), Color.Yellow)
-  val scroll = ColorText(Scroll(slant.width + 6, slant.height), Color.Red)
+object Banner:
+  val DefaultGreeting = "Pure  Scala  Server  MOTD  generator"
+  val DefaultBannerText = "server-banner"
 
-  val canvas = Canvas(scroll.width, scroll.height)
-    .draw(Drawing(greeting, 8, 2, 0))
-    .draw(Drawing(slant, 11, 4, 1))
-    .draw(Drawing(scroll, 0, 0, 0))
+  def render(bannerText: String, greeting: Option[String]): String =
+    val slant = ColorText(Slant(bannerText), Color.Yellow)
+    val scroll = ColorText(Scroll(slant.width + 6, slant.height), Color.Red)
 
-  println(canvas)
+    val canvas = greeting match
+      case Some(text) =>
+        val greetingCt = ColorText(Greeting(text), Color.Green)
+        Canvas(scroll.width, scroll.height)
+          .draw(Drawing(greetingCt, 8, 2, 0))
+          .draw(Drawing(slant, 11, 4, 1))
+          .draw(Drawing(scroll, 0, 0, 0))
+      case None =>
+        Canvas(scroll.width, scroll.height)
+          .draw(Drawing(slant, 11, 4, 1))
+          .draw(Drawing(scroll, 0, 0, 0))
+
+    canvas.toString
+
+// ### Model ###
 
 enum Color:
   case Red, Yellow, Green

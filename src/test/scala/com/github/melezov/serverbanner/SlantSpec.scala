@@ -6,6 +6,8 @@ import scala.concurrent.duration.*
 class SlantSpec extends BannerSuite:
   override val munitTimeout = 5.minutes
 
+  // ### Basics ###
+
   private val SortedChars: IndexedSeq[Char] =
     Slant.AllowedChars.toIndexedSeq.sorted
 
@@ -29,6 +31,8 @@ class SlantSpec extends BannerSuite:
       val expected = Glyph.find(ch2, Some(ch1)).toString
       assertEquals(actual, expected, s"pair '$ch1$ch2'")
 
+  // ### Conformity ###
+
   test("use cases"):
     val ucs = getResourceAsLines("slant/use-cases.txt")
       .grouped(1 + Glyph.Height)
@@ -51,6 +55,8 @@ class SlantSpec extends BannerSuite:
       assertEquals(actual, expected, s"combination '$chars'")
       passed += 1
     assertEquals(passed, combs.length)
+
+  // ### Performance ###
 
   test("speed test (100K chars)"):
     val charsLength = 100 * 1000

@@ -2,6 +2,8 @@ package com.github.melezov.serverbanner
 
 class GreetingSpec extends BannerSuite:
 
+  // ### Basics ###
+
   test("empty greeting"):
     assertEquals(Greeting(""), "\n")
 

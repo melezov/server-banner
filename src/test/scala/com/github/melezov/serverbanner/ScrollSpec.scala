@@ -2,6 +2,8 @@ package com.github.melezov.serverbanner
 
 class ScrollSpec extends BannerSuite:
 
+  // ### Basics ###
+
   test("0 x 0 fail"):
     intercept[IllegalArgumentException](Scroll(0, 1))
     intercept[IllegalArgumentException](Scroll(1, 0))
@@ -9,6 +11,8 @@ class ScrollSpec extends BannerSuite:
   for (w, h) <- Seq((1, 1), (2, 1), (5, 2), (12, 3), (17, 4), (27, 5), (113, 9)) do
     test(s"${w}x${h} scroll"):
       assertEquals(Scroll(w, h), getResourceAsString(s"scroll/${w}x${h}.txt"))
+
+  // ### Performance ###
 
   test("huge scroll (100M body)"):
     val reference = getResourceAsString("scroll/113x9.txt")
