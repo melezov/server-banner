@@ -39,8 +39,8 @@ object Main:
       |  -g, --greeting <text>    Greeting text displayed above the banner
       |
       |Examples:
-      |  server-banner my-app
-      |  server-banner --greeting "Welcome to" my-app""".stripMargin
+      |  server-banner My-Server
+      |  server-banner --greeting 'Such  a  *lovely*  place' HT-California-02""".stripMargin
 
   def main(args: Array[String]): Unit =
     parseArgs(args) match

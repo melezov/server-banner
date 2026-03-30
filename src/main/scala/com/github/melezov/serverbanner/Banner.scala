@@ -3,7 +3,7 @@ package com.github.melezov.serverbanner
 import scala.collection.mutable.ArrayBuffer
 
 object Banner:
-  val DefaultGreeting = "Pure  Scala  Server  MOTD  generator"
+  val DefaultGreeting = "Scala  Native  Server  MOTD  generator"
   val DefaultBannerText = "server-banner"
 
   def render(bannerText: String, greeting: Option[String]): String =
