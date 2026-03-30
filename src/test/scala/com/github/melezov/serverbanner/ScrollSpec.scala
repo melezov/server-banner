@@ -2,12 +2,13 @@ package com.github.melezov.serverbanner
 
 import org.specs2.execute.Result
 
-private class ScrollSpec extends BannerSpec:
+class ScrollSpec extends BannerSpec:
   def is = s2"""
   Basics
     0 x 0 fail      $testDisallowed
 
     1 x 1 scroll    ${testScroll(1, 1)}
+    2 x 1 scroll    ${testScroll(2, 1)}
     5 x 2 scroll    ${testScroll(5, 2)}
     12 x 3 scroll   ${testScroll(12, 3)}
     17 x 4 scroll   ${testScroll(17, 4)}

@@ -4,7 +4,8 @@ import scala.io.Source
 
 object Scroll:
   private val template: String =
-    new String(Source.fromInputStream(getClass.getResourceAsStream("scroll.txt")).toArray)
+    val source = Source.fromInputStream(getClass.getResourceAsStream("scroll.txt"))
+    try new String(source.toArray) finally source.close()
 
   private final val Row = "\n|       |"
 
@@ -47,7 +48,7 @@ object Scroll:
       if ch == 's' || ch == 'u' then
         val rep = if ch == 's' then spaces else underscores
         var i = bodyWidth - 1
-        while i > 1 do
+        while i > 0 do
           val chunkSize = math.min(i, bufferSize)
           sb.append(rep, 0, chunkSize)
           i -= chunkSize

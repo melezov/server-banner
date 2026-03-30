@@ -35,7 +35,9 @@ trait BannerSpec extends Specification with StrictLogging:
     Source.fromInputStream(getClass.getResourceAsStream(resource))
 
   protected def getResourceAsString(resource: String): String =
-    new String(sourceFrom(resource).toArray)
+    val source = sourceFrom(resource)
+    try new String(source.toArray) finally source.close()
 
   protected def getResourceAsLines(resource: String): Iterator[String] =
-    sourceFrom(resource).getLines
+    val source = sourceFrom(resource)
+    try source.getLines().toList.iterator finally source.close()
