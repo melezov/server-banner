@@ -6,7 +6,7 @@ object Banner:
   val DefaultGreeting = "Scala  Native  Server  MOTD  generator"
   val DefaultBannerText = "server-banner"
 
-  def render(bannerText: String, greeting: Option[String]): String =
+  def render(bannerText: String, greeting: Option[String], color: Boolean): String =
     val slant = ColorText(Slant(bannerText), Color.Yellow)
     val scroll = ColorText(Scroll(slant.width + 6, slant.height), Color.Red)
 
@@ -22,12 +22,20 @@ object Banner:
           .draw(Drawing(slant, 11, 4, 1))
           .draw(Drawing(scroll, 0, 0, 0))
 
-    canvas.toString
+    canvas.render(color)
 
 // ### Model ###
 
 enum Color:
-  case Red, Yellow, Green
+  case Red, Green, Yellow
+
+  def ansiCode: String = this match
+    case Red    => "\u001b[31m"
+    case Green  => "\u001b[32m"
+    case Yellow => "\u001b[33m"
+
+object Color:
+  val AnsiReset = "\u001b[0m"
 
 case class ColorText(text: String, color: Color):
   val lines: Seq[String] = text.split('\n').toIndexedSeq
@@ -43,8 +51,9 @@ class Canvas(val width: Int, val height: Int):
     drawings += drawing
     this
 
-  override def toString: String =
-    val buffer = Array.fill(width * height)(' ')
+  def render(color: Boolean): String =
+    val chars = Array.fill(width * height)(' ')
+    val colors = new Array[Color](width * height)
 
     for drawing <- drawings.sortBy(_.z) do
       for y <- 0 until drawing.colorText.height do
@@ -56,10 +65,36 @@ class Canvas(val width: Int, val height: Int):
               if pX >= 0 && pX < width then
                 val ch = drawing.colorText.lines(y)(x)
                 if ch != ' ' then
-                  buffer(pX + pY * width) = ch
+                  val idx = pX + pY * width
+                  chars(idx) = ch
+                  colors(idx) = drawing.colorText.color
 
-    val sb = StringBuilder()
-    for y <- 0 until height do
-      sb ++= new String(buffer, y * width, width).replaceFirst(" *$", "\n")
-    sb.toString
+    if !color then
+      val sb = StringBuilder()
+      for y <- 0 until height do
+        sb ++= new String(chars, y * width, width).replaceFirst(" *$", "\n")
+      sb.toString
+    else
+      val sb = StringBuilder()
+      var currentColor: Color | Null = null
+      for y <- 0 until height do
+        val lineStart = y * width
+        var lastNonSpace = width - 1
+        while lastNonSpace >= 0 && chars(lineStart + lastNonSpace) == ' ' do
+          lastNonSpace -= 1
+        for x <- 0 to lastNonSpace do
+          val idx = lineStart + x
+          val ch = chars(idx)
+          if ch != ' ' then
+            val c = colors(idx)
+            if c != currentColor then
+              sb ++= c.ansiCode
+              currentColor = c
+          sb += ch
+        sb += '\n'
+      if currentColor != null then
+        sb ++= Color.AnsiReset
+      sb.toString
+
+  override def toString: String = render(color = false)
 end Canvas
