@@ -21,7 +21,7 @@ class SlantSpec extends BannerSpec {
 
   // ### Basics ###
 
-  private[this] val SortedChars: IndexedSeq[Char] =
+  private val SortedChars: IndexedSeq[Char] =
     Slant.AllowedChars.toIndexedSeq.sorted
 
   def testAllowed: Result =
@@ -37,7 +37,7 @@ class SlantSpec extends BannerSpec {
     actual === expected
   }
 
-  private[this] val TwoCharCombinations: IndexedSeq[(Char, Char)] =
+  private val TwoCharCombinations: IndexedSeq[(Char, Char)] =
     SortedChars flatMap { ch1 => SortedChars map(ch1 -> _) }
 
   def testGlyphPairs: Result = Result.foreach(TwoCharCombinations) { case (ch1, ch2) =>

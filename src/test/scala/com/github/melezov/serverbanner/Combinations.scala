@@ -14,7 +14,7 @@ class Combinations(chars: String, depth: Int) extends IndexedSeq[String] {
   }
 
   @tailrec
-  private[this] def resolve(sb: StringBuilder, length: Long, index: Long): String = {
+  private def resolve(sb: StringBuilder, length: Long, index: Long): String = {
     val chunk = length / chars.length
     val div = index / chunk
     sb += chars(div.toInt)
@@ -31,14 +31,16 @@ class Combinations(chars: String, depth: Int) extends IndexedSeq[String] {
 }
 
 /** Creates an input file for a Slant generator like Figlet / Toilet */
-object Combinations extends App {
-  val Level = 3
-  val Chars = Slant.AllowedChars.mkString.sorted
+object Combinations {
+  def main(args: Array[String]): Unit = {
+    val Level = 3
+    val Chars = Slant.AllowedChars.mkString.sorted
 
-  val os = new java.io.BufferedOutputStream(new java.io.FileOutputStream(s"$Level-combinations.txt"))
-  new Combinations(Chars, Level) foreach { line =>
-    os.write(line getBytes "ISO-8859-1")
-    os.write('\n')
+    val os = new java.io.BufferedOutputStream(new java.io.FileOutputStream(s"$Level-combinations.txt"))
+    new Combinations(Chars, Level) foreach { line =>
+      os.write(line.getBytes("ISO-8859-1"))
+      os.write('\n')
+    }
+    os.close()
   }
-  os.close()
 }

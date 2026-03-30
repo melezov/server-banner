@@ -1,7 +1,7 @@
 package com.github.melezov.serverbanner
 
 object Greeting {
-  private[this] val transform = Map(
+  private val transform = Map(
     ' ' -> " "
   , '\t' -> "  "
   ).withDefault(ch => s"${ch.toUpper} ")

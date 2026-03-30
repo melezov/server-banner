@@ -33,7 +33,7 @@ trait BannerSpec extends Specification with StrictLogging {
 
   // ### Resources ###
 
-  private[this] def sourceFrom(resource: String) =
+  private def sourceFrom(resource: String) =
     Source.fromInputStream(getClass.getResourceAsStream(resource))
 
   protected def getResourceAsString(resource: String): String =

@@ -3,11 +3,11 @@ package com.github.melezov.serverbanner
 import scala.io.Source
 
 object Scroll {
-  private[this] val template: String =
+  private val template: String =
     new String(Source.fromInputStream(getClass.getResourceAsStream("scroll.txt")).toArray)
 
-  private[this] final val Row = "\n|       |"
-  private[this] def factory(height: Int): String = height match {
+  private final val Row = "\n|       |"
+  private def factory(height: Int): String = height match {
     case 1 => template
       .replace("x", "")
       .replace("y", "")

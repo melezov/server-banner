@@ -7,16 +7,16 @@ object Slant {
   private[serverbanner] object Glyph {
     final val Height: Int = 6
     final val OneMaxWidth: Int = 13
-    private[this] val TwoWidth: Int = 23
+    private val TwoWidth: Int = 23
 
-    private[this] final val BufferRowLength = TwoWidth * AllowedChars.size + 1
-    private[this] val buffer: Array[Char] = {
+    private final val BufferRowLength = TwoWidth * AllowedChars.size + 1
+    private val buffer: Array[Char] = {
       val totalBufferLength = BufferRowLength * Height * (AllowedChars.size + 1)
       scala.io.Source.fromResource("com/github/melezov/serverbanner/slant.txt").toArray
         .ensuring(_.length == totalBufferLength)
     }
 
-    private[this] val lookup: Map[(Char, Option[Char]), Glyph] = {
+    private val lookup: Map[(Char, Option[Char]), Glyph] = {
       val chars = AllowedChars.toIndexedSeq.sorted
       val reverse = chars.zipWithIndex.toMap
 
@@ -66,13 +66,13 @@ object Slant {
     }
   }
 
-  private[this] val _pushConditions = Set(
+  private val _pushConditions = Set(
     "FY", "TY", "fY"
   , "P4", "P7", "PZ"
   , "r4"
   )
 
-  private[this] val _smushConditions = Set(
+  private val _smushConditions = Set(
     "FV/", "rV/", "rv/", "fV/", "Pv/", "TV/", "PV/"
   , "FW/", "rW/", "rw/", "fW/", "Pw/", "TW/", "PW/"
   , "PV\\"
@@ -80,7 +80,7 @@ object Slant {
   , "P-/", "r-/"
   )
 
-  private[this] val NoPrev = IndexedSeq.fill(Glyph.Height){-1}
+  private val NoPrev = IndexedSeq.fill(Glyph.Height){-1}
 
   def apply(text: String): String = {
     locally {

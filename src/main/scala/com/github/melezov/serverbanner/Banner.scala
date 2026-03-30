@@ -29,7 +29,7 @@ case class ColorText(text: String, color: Color) {
 case class Drawing(colorText: ColorText, x: Int, y: Int, z: Int)
 
 class Canvas(val width: Int, val height: Int) {
-  private[this] val drawings = new ArrayBuffer[Drawing]
+  private val drawings = new ArrayBuffer[Drawing]
 
   def draw(drawing: Drawing): this.type = {
     drawings += drawing
