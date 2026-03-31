@@ -9,18 +9,26 @@ assembly / assemblyMergeStrategy := {
   case x => (assembly / assemblyMergeStrategy).value(x)
 }
 
-Proguard / proguardVersion := "7.6.1"
+Proguard / proguardVersion := "7.9.0"
 Proguard / proguardOptions ++= Seq(
   ProguardOptions.keepMain("com.github.melezov.serverbanner.Main"),
   "-dontnote",
   "-dontwarn",
-  "-dontobfuscate",
-  "-dontoptimize",
-  "-keep class scala.runtime.** { *; }",
+  "-optimizationpasses 5",
+  "-overloadaggressively",
+  "-mergeinterfacesaggressively",
+  "-dontusemixedcaseclassnames",
+  "-allowaccessmodification",
+  "-repackageclasses 'com.github.melezov.serverbanner.scala'",
+  // LazyVals uses MethodHandles.lookup - allow repackaging but keep members
+  "-keepclassmembers class scala.runtime.LazyVals { *; }",
+  "-keepclassmembers class scala.runtime.LazyVals$ { *; }",
   "-keepclassmembers class * extends java.lang.Enum { *; }",
   "-keepclassmembers class * { ** MODULE$; }",
+  // Scala 3 lazy vals use VarHandle to access fields by name
+  "-keepclassmembers class * { *** *$lzy*; }",
 )
-Proguard / proguardInputFilter := { _ => None }
+Proguard / proguardInputFilter := { _ => Some("!library.properties") }
 Proguard / proguardInputs := Seq(assembly.value)
 Proguard / proguardLibraries := Seq(
   file(System.getProperty("java.home") + "/jmods/java.base.jmod")
