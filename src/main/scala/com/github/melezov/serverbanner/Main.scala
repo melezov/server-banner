@@ -1,7 +1,5 @@
 package com.github.melezov.serverbanner
 
-import scala.scalanative.posix.unistd
-
 object Main:
   enum ColorMode:
     case Auto, On, Off
@@ -12,6 +10,7 @@ object Main:
   object Action:
     case class Run(config: Config) extends Action
     case class Help(colorMode: ColorMode) extends Action
+    case object Version extends Action
 
   def parseArgs(args: Array[String]): Either[String, Action] =
     args match
@@ -39,6 +38,8 @@ object Main:
                 case "off"  => colorMode = ColorMode.Off
                 case other  => return Left(s"Invalid value for --color: $other (expected: auto, on, off)")
               i += 2
+            case "--version" =>
+              return Right(Action.Version)
             case "--help" =>
               help = true
               i += 1
@@ -64,34 +65,41 @@ object Main:
       val term = System.getenv("TERM")
       if noColor != null then false
       else if term == "dumb" then false
-      else unistd.isatty(fd) != 0
+      else Platform.isatty(fd)
 
   def help(color: Boolean): String =
-    def h(s: String) = if color then s"${Color.Yellow.ansiCode}$s${Color.AnsiReset}" else s
-    def o(s: String) = if color then s"${Color.Green.ansiCode}$s${Color.AnsiReset}" else s
-    s"""${h("server-banner")} ${EmbeddedResources.version}
-       |${h("https://github.com/github/melezov/server-banner")}
+    def yellow(s: String) = if color then s"${Color.Yellow.ansiCode}$s${Color.AnsiReset}" else s
+    def green(s: String) = if color then s"${Color.Green.ansiCode}$s${Color.AnsiReset}" else s
+    s"""${yellow("server-banner")} v${EmbeddedResources.version}
+       |${yellow("https://github.com/github/melezov/server-banner")}
        |
-       |${h("Usage:")} server-banner [OPTIONS] <banner-text>
+       |${yellow("Usage:")} server-banner [OPTIONS] <banner-text>
        |
-       |${h("Arguments:")}
+       |${yellow("Arguments:")}
        |  <banner-text>            Text to render as ASCII art banner
        |
-       |${h("Options:")}
-       |  ${o("-g, --greeting <text>")}    Greeting text displayed above the banner
-       |  ${o("--color <auto|on|off>")}    Color output mode (default: auto)
-       |  ${o("--help")}                   Show this help message
+       |${yellow("Options:")}
+       |  ${green("--version")}                Print version and exit
+       |  ${green("--help")}                   Show this help message
+       |  ${green("--greeting <text>")}        Greeting text displayed above the banner
+       |  ${green("--color <auto|on|off>")}    Color output mode (default: auto)
        |
-       |${h("Examples:")}
-       |  server-banner My-Server
-       |  server-banner --greeting 'Such  a  *lovely*  place' HT-California-02
-       |  server-banner --color off My-Server""".stripMargin
+       |${yellow("Examples:")}
+       |  server-banner --color off My-Server
+       |  server-banner --greeting 'Such  a  *lovely*  place' HT-California-02""".stripMargin
 
   def main(args: Array[String]): Unit =
     parseArgs(args) match
       case Right(Action.Run(config)) =>
+        val disallowed = config.bannerText.filterNot(Slant.AllowedChars).distinct
+        if disallowed.nonEmpty then
+          System.err.println(s"Error: Characters ${disallowed.mkString("'", "', '", "'")} are not supported in banner text")
+          System.err.println(s"Valid characters: A-Z, a-z, 0-9, underscore and hyphen")
+          sys.exit(1)
         val color = resolveColor(config.colorMode)
         print(Banner.render(config.bannerText, config.greeting, color))
+      case Right(Action.Version) =>
+        println(EmbeddedResources.version)
       case Right(Action.Help(colorMode)) =>
         val color = resolveColor(colorMode)
         print(Banner.render(Banner.DefaultBannerText, Some(Banner.DefaultGreeting), color))

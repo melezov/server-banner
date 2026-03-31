@@ -1,28 +1,26 @@
-import sbt._
-import sbt.Keys._
+import sbt.*
+import sbt.Keys.*
 
 object EmbedResources {
-  private def escape(s: String): String = {
-    val sb = new java.lang.StringBuilder(s.length * 2)
-    var i = 0
-    while (i < s.length) {
-      s.charAt(i) match {
-        case '\\' => sb.append("\\\\")
-        case '"'  => sb.append("\\\"")
-        case '\n' => sb.append("\\n")
-        case '\r' => sb.append("\\r")
-        case '\t' => sb.append("\\t")
-        case c if c < ' ' => sb.append(f"\\u${c.toInt}%04x")
-        case c    => sb.append(c)
-      }
-      i += 1
+  private def quoted(s: String): String = {
+    val sb = new StringBuilder(s.length * 2 + 2)
+    sb += '"'
+    s foreach {
+      case '\\' => sb ++= "\\\\"
+      case '"'  => sb ++= "\\\""
+      case '\n' => sb ++= "\\n"
+      case '\r' => sb ++= "\\r"
+      case '\t' => sb ++= "\\t"
+      case c if c < ' ' => sb ++= f"\\u${c.toInt}%04x"
+      case c    => sb += c
     }
+    sb += '"'
     sb.toString
   }
 
   val settings: Seq[Setting[_]] = Seq(
     Compile / sourceGenerators += Def.task {
-      val resourceDir = (Compile / resourceDirectory).value / "com" / "github" / "melezov" / "serverbanner"
+      val resourceDir = (ThisBuild / baseDirectory).value / "src" / "main" / "resources" / "com" / "github" / "melezov" / "serverbanner"
       val outputDir = (Compile / sourceManaged).value / "com" / "github" / "melezov" / "serverbanner"
       outputDir.mkdirs()
 
@@ -30,39 +28,21 @@ object EmbedResources {
       val slantContent = IO.read(resourceDir / "slant.txt")
       val projectVersion = version.value
 
-      val outFile = outputDir / "EmbeddedResources.scala"
-      val q = "\""
-
-      val sb = new java.lang.StringBuilder()
-      sb.append("package com.github.melezov.serverbanner\n\n")
-      sb.append("private[serverbanner] object EmbeddedResources:\n")
-
-      sb.append("  val version: String =\n    ")
-      sb.append(q)
-      sb.append(escape(projectVersion))
-      sb.append(q)
-      sb.append("\n\n")
-
-      sb.append("  val scrollTemplate: String =\n    ")
-      sb.append(q)
-      sb.append(escape(scrollContent))
-      sb.append(q)
-      sb.append("\n\n")
-
       val chunkSize = 30000
       val chunks = slantContent.grouped(chunkSize).toIndexedSeq
+
+      val sb = new StringBuilder
+      sb ++= "package com.github.melezov.serverbanner\n\n" ++=
+        "private[serverbanner] object EmbeddedResources:\n" ++=
+        s"  val version: String =\n    ${quoted(projectVersion)}\n\n" ++=
+        s"  val scrollTemplate: String =\n    ${quoted(scrollContent)}\n\n"
+
       for ((chunk, i) <- chunks.zipWithIndex) {
-        sb.append("  private val s" + i + ": String =\n    ")
-        sb.append(q)
-        sb.append(escape(chunk))
-        sb.append(q)
-        sb.append("\n\n")
+        sb ++= s"  private val s$i: String =\n    ${quoted(chunk)}\n\n"
       }
+      sb ++= s"  val slantBuffer: Array[Char] =\n    (${chunks.indices.map(i => s"s$i").mkString(" + ")}).toArray\n"
 
-      sb.append("  val slantBuffer: Array[Char] =\n    (")
-      sb.append(chunks.indices.map(i => "s" + i).mkString(" + "))
-      sb.append(").toArray\n")
-
+      val outFile = outputDir / "EmbeddedResources.scala"
       IO.write(outFile, sb.toString)
       Seq(outFile)
     }
