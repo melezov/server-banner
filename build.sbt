@@ -19,6 +19,7 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
       "-encoding", "UTF-8",
       "-unchecked",
       "-explain",
+      "-release:17",
     ),
 
     libraryDependencies += "org.scalameta" %%% "munit" % "1.1.0" % Test,
@@ -31,6 +32,7 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
 
     EmbedResources.settings,
   )
+  .jvmEnablePlugins(SbtProguard)
   .jvmSettings(
     assembly / mainClass := Some("com.github.melezov.serverbanner.Main"),
     assembly / assemblyJarName := "server-banner.jar",
@@ -39,11 +41,28 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
       case x => (assembly / assemblyMergeStrategy).value(x)
     },
 
+    Proguard / proguardVersion := "7.6.1",
+    Proguard / proguardOptions ++= Seq(
+      ProguardOptions.keepMain("com.github.melezov.serverbanner.Main"),
+      "-dontnote",
+      "-dontwarn",
+      "-dontobfuscate",
+      "-dontoptimize",
+      "-keep class scala.runtime.** { *; }",
+      "-keepclassmembers class * extends java.lang.Enum { *; }",
+      "-keepclassmembers class * { ** MODULE$; }",
+    ),
+    Proguard / proguardInputFilter := { _ => None },
+    Proguard / proguardInputs := Seq(assembly.value),
+    Proguard / proguardLibraries := Seq(
+      file(System.getProperty("java.home") + "/jmods/java.base.jmod")
+    ),
+
     release := {
       val log = streams.value.log
-      val jar = assembly.value
-      val dest = releaseDir / jar.getName
-      IO.copyFile(jar, dest)
+      val shrunk = (Proguard / proguard).value.head
+      val dest = releaseDir / "server-banner.jar"
+      IO.copyFile(shrunk, dest)
       log.success(s"Release JAR: ${dest.getAbsolutePath}")
       dest
     },
@@ -55,15 +74,15 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
         .withGC(GC.immix)
     },
 
-    commands += Command.command("release") { state0 =>
-      val extracted = Project.extract(state0)
+    release := {
+      val log = streams.value.log
+      val s = state.value
+      val extracted = Project.extract(s)
       val releaseState = extracted.appendWithoutSession(Seq(
         nativeConfig ~= { _.withMode(Mode.releaseSize).withLTO(LTO.thin) }
-      ), state0)
-
-      val log = extracted.get(sLog)
+      ), s)
       val releaseExtracted = Project.extract(releaseState)
-      val (state1, binary) = releaseExtracted.runTask(Compile / nativeLink, releaseState)
+      val (_, binary) = releaseExtracted.runTask(Compile / nativeLink, releaseState)
 
       try {
         log.info(s"UPX compressing ${binary.getName} ...")
@@ -78,10 +97,9 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
       }
 
       val dest = releaseDir / binary.getName
-      sbt.IO.copyFile(binary, dest)
+      IO.copyFile(binary, dest)
       log.success(s"Release binary: ${dest.getAbsolutePath}")
-
-      state1
+      dest
     },
   )
 
