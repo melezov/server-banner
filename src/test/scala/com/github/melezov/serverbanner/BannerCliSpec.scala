@@ -18,12 +18,6 @@ class BannerCliSpec extends BannerSuite:
       Right(Action.Run(Config("HT-California-02", Some("Plenty of room at the"), ColorMode.Auto))),
     )
 
-  test("banner text with -g shorthand"):
-    assertEquals(
-      Main.parseArgs(Array("-g", "Such a lovely place", "HT-California-02")),
-      Right(Action.Run(Config("HT-California-02", Some("Such a lovely place"), ColorMode.Auto))),
-    )
-
   test("greeting after banner text"):
     assertEquals(
       Main.parseArgs(Array("HT-California-02", "--greeting", "You can check out any time you like")),

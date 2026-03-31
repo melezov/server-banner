@@ -3,6 +3,9 @@ import scala.scalanative.build.*
 
 ThisBuild / scalaVersion := "3.8.1"
 
+val releaseDir = file("release")
+val release = taskKey[File]("Build release artifact and copy to release/")
+
 lazy val target = crossProject(NativePlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("."))
@@ -31,6 +34,19 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
   .jvmSettings(
     assembly / mainClass := Some("com.github.melezov.serverbanner.Main"),
     assembly / assemblyJarName := "server-banner.jar",
+    assembly / assemblyMergeStrategy := {
+      case PathList(ps @ _*) if ps.last.endsWith(".tasty") => MergeStrategy.discard
+      case x => (assembly / assemblyMergeStrategy).value(x)
+    },
+
+    release := {
+      val log = streams.value.log
+      val jar = assembly.value
+      val dest = releaseDir / jar.getName
+      IO.copyFile(jar, dest)
+      log.success(s"Release JAR: ${dest.getAbsolutePath}")
+      dest
+    },
   )
   .nativeSettings(
     nativeConfig ~= {
@@ -61,7 +77,6 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
           log.warn(s"UPX failed: ${e.getMessage.linesIterator.next()}")
       }
 
-      val releaseDir = extracted.get(baseDirectory) / "release"
       val dest = releaseDir / binary.getName
       sbt.IO.copyFile(binary, dest)
       log.success(s"Release binary: ${dest.getAbsolutePath}")
