@@ -2,6 +2,12 @@ import CustomKeys.release
 
 enablePlugins(SbtProguard)
 
+clean := {
+  clean.value
+  val dest = (ThisBuild / baseDirectory).value / "release" / "server-banner.jar"
+  if (dest.exists()) IO.delete(dest)
+}
+
 assembly / mainClass := Some("com.github.melezov.serverbanner.Main")
 assembly / assemblyJarName := "server-banner.jar"
 assembly / assemblyMergeStrategy := {
@@ -19,7 +25,7 @@ Proguard / proguardOptions ++= Seq(
   "-mergeinterfacesaggressively",
   "-dontusemixedcaseclassnames",
   "-allowaccessmodification",
-  "-repackageclasses 'com.github.melezov.serverbanner.scala'",
+  "-repackageclasses 'com.github.melezov.serverbanner'",
   // LazyVals uses MethodHandles.lookup - allow repackaging but keep members
   "-keepclassmembers class scala.runtime.LazyVals { *; }",
   "-keepclassmembers class scala.runtime.LazyVals$ { *; }",

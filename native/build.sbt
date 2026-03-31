@@ -1,5 +1,13 @@
 import CustomKeys.release
+
 import scala.scalanative.build.*
+
+clean := {
+  clean.value
+  val ext = if (System.getProperty("os.name", "").startsWith("Windows")) ".exe" else ""
+  val dest = (ThisBuild / baseDirectory).value / "release" / (name.value + ext)
+  if (dest.exists()) IO.delete(dest)
+}
 
 nativeConfig ~= {
   _.withMode(Mode.debug)
@@ -9,13 +17,14 @@ nativeConfig ~= {
 
 release := {
   val log = streams.value.log
+  val ref = thisProjectRef.value
   val s = state.value
   val extracted = Project.extract(s)
   val releaseState = extracted.appendWithoutSession(Seq(
     nativeConfig ~= { _.withMode(Mode.releaseSize).withLTO(LTO.thin) }
   ), s)
   val releaseExtracted = Project.extract(releaseState)
-  val (_, binary) = releaseExtracted.runTask(Compile / nativeLink, releaseState)
+  val (_, binary) = releaseExtracted.runTask(ref / (Compile / nativeLink), releaseState)
 
   try {
     log.info(s"UPX compressing ${binary.getName} ...")

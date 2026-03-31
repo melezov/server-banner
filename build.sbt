@@ -1,8 +1,7 @@
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
+import CustomKeys.release
 
 ThisBuild / scalaVersion := "3.8.1"
-
-import CustomKeys.release
 
 lazy val target = crossProject(NativePlatform, JVMPlatform)
   .crossType(CrossType.Full)
@@ -31,8 +30,19 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
     EmbedResources.settings,
   )
 
-Compile / sources := Seq.empty
-Test / sources := Seq.empty
+lazy val root = project.in(file("."))
+  .aggregate(target.jvm, target.native)
+  .settings(
+    name := "root",
+    Compile / sources := Seq.empty,
+    Test / sources := Seq.empty,
+    publish / skip := true,
+    release := {
+      val jvmArtifact = (target.jvm / release).value
+      val nativeArtifact = (target.native / release).value
+      baseDirectory.value / "release"
+    },
+  )
 
 onLoad in Global := (onLoad in Global).value.andThen("project targetNative" :: _)
 Global / onChangedBuildSource := ReloadOnSourceChanges

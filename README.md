@@ -30,9 +30,12 @@ sbt nativeLink
 
 # Release build (optimized for size, UPX compressed if available)
 sbt release
+
+# Standalone JVM fat JAR (ProGuard-shrunk, requires only a Java 17+ runtime)
+sbt targetJVM/release
 ```
 
-The binary is produced at `target/scala-3.8.1/server-banner`.
+Release artifacts are written to the `release/` directory.
 
 ## Test
 
