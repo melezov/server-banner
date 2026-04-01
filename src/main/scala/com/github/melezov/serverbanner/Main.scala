@@ -51,12 +51,13 @@ object Main:
                 return Left(s"Unexpected argument: $arg")
               bannerText = Some(arg)
               i += 1
+        val normalizedGreeting = greeting.map(_.trim).filter(_.nonEmpty)
         if help then
           Right(Action.Help(colorMode))
         else
           bannerText match
-            case Some(text) => Right(Action.Run(Config(text, greeting, colorMode)))
-            case None => Left("Missing banner text argument")
+            case Some(text) if text.nonEmpty => Right(Action.Run(Config(text, normalizedGreeting, colorMode)))
+            case _ => Left("Missing banner text argument")
 
   def resolveColor(mode: ColorMode, fd: Int = 1): Boolean = mode match
     case ColorMode.On  => true
@@ -72,7 +73,7 @@ object Main:
     def yellow(s: String) = if color then s"${Color.Yellow.ansiCode}$s${Color.AnsiReset}" else s
     def green(s: String) = if color then s"${Color.Green.ansiCode}$s${Color.AnsiReset}" else s
     s"""${yellow("server-banner")} v${EmbeddedResources.version}
-       |${yellow("https://github.com/github/melezov/server-banner")}
+       |${yellow("https://github.com/melezov/server-banner")}
        |
        |${yellow("Usage:")} server-banner [OPTIONS] <banner-text>
        |
@@ -87,7 +88,7 @@ object Main:
        |
        |${yellow("Examples:")}
        |  server-banner --color off My-Server
-       |  server-banner --greeting 'Such  a  *lovely*  place' HT-California-02""".stripMargin
+       |  server-banner --greeting 'Such  a  *lovely*  place' HT-Cal-4N""".stripMargin
 
   def main(args: Array[String]): Unit =
     parseArgs(args) match

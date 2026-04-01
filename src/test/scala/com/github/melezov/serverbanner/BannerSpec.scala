@@ -25,8 +25,16 @@ abstract class BannerSuite extends munit.FunSuite:
 
   // ### Resources ###
 
+  private val resourceDir =
+    val candidates = Seq(
+      "src/test/resources/com/github/melezov/serverbanner",
+      "../src/test/resources/com/github/melezov/serverbanner",
+    )
+    candidates.find(d => java.io.File(d).isDirectory)
+      .getOrElse(sys.error("Cannot find test resources directory"))
+
   private def sourceFrom(resource: String) =
-    Source.fromFile(s"src/test/resources/com/github/melezov/serverbanner/$resource")
+    Source.fromFile(s"$resourceDir/$resource")
 
   def getResourceAsString(resource: String): String =
     val source = sourceFrom(resource)

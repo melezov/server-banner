@@ -24,3 +24,7 @@ class ScrollSpec extends BannerSuite:
 
     val lengthDifference = bodyWidth - 113
     assertEquals(render.length, reference.length + lengthDifference * resizableHeight)
+    assert(render.contains(".---."), "should contain scroll top decoration")
+    assert(render.contains("---'"), "should contain scroll bottom decoration")
+    val lines = render.split('\n')
+    assert(lines.length > 3, "should have more than just top/bottom decorations")

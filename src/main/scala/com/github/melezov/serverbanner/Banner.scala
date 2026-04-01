@@ -21,8 +21,8 @@ object Banner:
       case None =>
         val scroll = ColorText(Scroll(slant.width + 6, slant.height), Color.Red)
         Canvas(scroll.width, scroll.height)
-          .draw(Drawing(slant, 11, 4, 1))
           .draw(Drawing(scroll, 0, 0, 0))
+          .draw(Drawing(slant, 11, 4, 1))
 
     canvas.render(color)
 
@@ -44,12 +44,12 @@ case class ColorText(text: String, color: Color):
     val raw = text.split('\n').toIndexedSeq
     raw map { line =>
       val start = line.indexWhere(_ != ' ')
-      if start < 0 then ("", 0) // should not happen
+      if start < 0 then ("", 0)
       else (line.drop(start), start)
     }
   }
   val height: Int = lines.length
-  val width: Int = lines.map { case (line, start) => line.length + start }.max
+  val width: Int = lines.map { case (line, start) => line.length + start }.maxOption.getOrElse(0)
 
 case class Drawing(colorText: ColorText, x: Int, y: Int, z: Int)
 
@@ -100,7 +100,7 @@ class Canvas(val width: Int, val height: Int):
             currentColor = c
           sb += ch
         sb += '\n'
-      sb.setLength(sb.length - 1)
+      if sb.nonEmpty then sb.setLength(sb.length - 1)
       sb ++= Color.AnsiReset += '\n'
       sb.toString
 

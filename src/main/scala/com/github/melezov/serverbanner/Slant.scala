@@ -113,8 +113,9 @@ object Slant:
 
       if _push then
         val lastSlash = output.lastIndexOf('/')
-        output(lastSlash - 1) = '/'
-        output(lastSlash) = ' '
+        if lastSlash > 0 then
+          output(lastSlash - 1) = '/'
+          output(lastSlash) = ' '
 
       pos + glyph.maxLineLength - lastMaxLineLength
     end writeChar

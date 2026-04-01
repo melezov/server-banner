@@ -72,3 +72,7 @@ class SlantSpec extends BannerSuite:
 
     assertEquals(render.count(_ == '\n'), Glyph.Height)
     assert(render.length > Glyph.Height * charsLength)
+    assert(render.nonEmpty, "output should be non-empty")
+    val lines = render.split('\n')
+    assertEquals(lines.length, Glyph.Height)
+    assert(lines.forall(_.nonEmpty), "all lines should be non-empty")

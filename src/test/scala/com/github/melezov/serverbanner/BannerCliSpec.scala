@@ -169,6 +169,34 @@ class BannerCliSpec extends BannerSuite:
     // The greeting should fully appear, overwriting any scroll graphics
     assert(greetingLine.contains(greeting), s"long greeting should overwrite scroll border characters")
 
+  // ### Greeting normalization ###
+
+  test("whitespace-only greeting is normalized to None"):
+    assertEquals(
+      Main.parseArgs(Array("--greeting", "   ", "My-Server")),
+      Right(Action.Run(Config("My-Server", None, ColorMode.Detect))),
+    )
+
+  test("greeting with leading/trailing whitespace is trimmed"):
+    assertEquals(
+      Main.parseArgs(Array("--greeting", "  hello  ", "My-Server")),
+      Right(Action.Run(Config("My-Server", Some("hello"), ColorMode.Detect))),
+    )
+
+  // ### Complex argument ordering ###
+
+  test("--greeting then --color then banner text"):
+    assertEquals(
+      Main.parseArgs(Array("--greeting", "hello", "--color", "off", "My-Server")),
+      Right(Action.Run(Config("My-Server", Some("hello"), ColorMode.Off))),
+    )
+
+  test("banner text then --greeting then --color"):
+    assertEquals(
+      Main.parseArgs(Array("My-Server", "--greeting", "hello", "--color", "on")),
+      Right(Action.Run(Config("My-Server", Some("hello"), ColorMode.On))),
+    )
+
   // ### Unsupported characters ###
 
   test("unsupported characters in banner text are detected"):
@@ -176,6 +204,11 @@ class BannerCliSpec extends BannerSuite:
     assert(disallowed.nonEmpty, "test input should contain disallowed characters")
     assert(disallowed.contains(' '), "space should be disallowed")
     assert(disallowed.contains('!'), "! should be disallowed")
+
+  test("Slant rejects disallowed characters"):
+    val ex = intercept[IllegalArgumentException](Slant("Hello World!"))
+    assert(ex.getMessage.contains("' '"), "error should mention space")
+    assert(ex.getMessage.contains("'!'"), "error should mention !")
 
   // ### Help output ###
 
@@ -185,7 +218,7 @@ class BannerCliSpec extends BannerSuite:
     assert(output.contains("--color <detect|on|off>"), "should document --color flag")
     assert(output.contains("--version"), "should document --version flag")
     assert(output.contains(EmbeddedResources.version), "should contain version")
-    assert(output.contains("https://github.com/github/melezov/server-banner"), "should contain project URL")
+    assert(output.contains("https://github.com/melezov/server-banner"), "should contain project URL")
 
   test("colored help has ANSI escape codes"):
     val output = Main.help(true)
@@ -195,3 +228,24 @@ class BannerCliSpec extends BannerSuite:
     assert(output.contains(Color.Yellow.ansiCode), "should contain yellow for headers")
     assert(output.contains(Color.Green.ansiCode), "should contain green for options")
     assert(output.contains(EmbeddedResources.version), "should contain version")
+
+  // ### Z-order rendering ###
+
+  test("higher z-order drawings overwrite lower ones"):
+    val output = Banner.render("Hi", Some("Such a lovely place"), false)
+    val lines = output.split('\n')
+    val greetingLine = lines(2)
+    val greeting = Greeting("Such a lovely place").trim
+    // Greeting (z=1) should overwrite scroll (z=0) on the same line
+    assert(greetingLine.contains(greeting), "z=1 greeting should overwrite z=0 scroll")
+    // Scroll decorations should still be present on lines without greeting
+    assert(lines.last.contains("---"), "scroll bottom should be intact")
+
+  // ### Embedded resource integrity ###
+
+  test("slant buffer validates on load"):
+    // EmbeddedResources.slantBuffer has an ensuring check that validates length
+    assert(EmbeddedResources.slantBuffer.nonEmpty, "slant buffer should not be empty")
+
+  test("scroll template is non-empty"):
+    assert(EmbeddedResources.scrollTemplate.nonEmpty, "scroll template should not be empty")
