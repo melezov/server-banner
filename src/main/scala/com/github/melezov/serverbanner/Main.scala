@@ -2,7 +2,7 @@ package com.github.melezov.serverbanner
 
 object Main:
   enum ColorMode:
-    case Auto, On, Off
+    case Detect, On, Off
 
   case class Config(bannerText: String, greeting: Option[String], colorMode: ColorMode)
 
@@ -11,15 +11,16 @@ object Main:
     case class Run(config: Config) extends Action
     case class Help(colorMode: ColorMode) extends Action
     case object Version extends Action
+    case object NoArgs extends Action
 
   def parseArgs(args: Array[String]): Either[String, Action] =
     args match
       case Array() =>
-        Left("Missing banner text argument. Use --help for usage information")
+        Right(Action.NoArgs)
       case _ =>
         var greeting = Option.empty[String]
         var bannerText = Option.empty[String]
-        var colorMode = ColorMode.Auto
+        var colorMode = ColorMode.Detect
         var help = false
         var i = 0
         while i < args.length do
@@ -33,10 +34,10 @@ object Main:
               if i + 1 >= args.length then
                 return Left("Missing value for --color")
               args(i + 1) match
-                case "auto" => colorMode = ColorMode.Auto
+                case "detect" => colorMode = ColorMode.Detect
                 case "on"   => colorMode = ColorMode.On
                 case "off"  => colorMode = ColorMode.Off
-                case other  => return Left(s"Invalid value for --color: $other (expected: auto, on, off)")
+                case other  => return Left(s"Invalid value for --color: $other (expected: detect, on, off)")
               i += 2
             case "--version" =>
               return Right(Action.Version)
@@ -60,7 +61,7 @@ object Main:
   def resolveColor(mode: ColorMode, fd: Int = 1): Boolean = mode match
     case ColorMode.On  => true
     case ColorMode.Off => false
-    case ColorMode.Auto =>
+    case ColorMode.Detect =>
       val noColor = System.getenv("NO_COLOR")
       val term = System.getenv("TERM")
       if noColor != null then false
@@ -82,7 +83,7 @@ object Main:
        |  ${green("--version")}                Print version and exit
        |  ${green("--help")}                   Show this help message
        |  ${green("--greeting <text>")}        Greeting text displayed above the banner
-       |  ${green("--color <auto|on|off>")}    Color output mode (default: auto)
+       |  ${green("--color <detect|on|off>")}  Color output mode (default: detect)
        |
        |${yellow("Examples:")}
        |  server-banner --color off My-Server
@@ -105,8 +106,14 @@ object Main:
         print(Banner.render(Banner.DefaultBannerText, Some(Banner.DefaultGreeting), color))
         println()
         println(help(color))
+      case Right(Action.NoArgs) =>
+        val color = resolveColor(ColorMode.Detect)
+        print(Banner.render(Banner.DefaultBannerText, Some(Banner.DefaultGreeting), color))
+        println()
+        println(help(color))
+        sys.exit(1)
       case Left(error) =>
-        val color = resolveColor(ColorMode.Auto, fd = 2)
+        val color = resolveColor(ColorMode.Detect, fd = 2)
         System.err.println(s"Error: $error")
         System.err.println()
         System.err.println(help(color))

@@ -6,22 +6,22 @@ class BannerCliSpec extends BannerSuite:
 
   // ### Argument parsing ###
 
-  test("no arguments returns error"):
-    assert(Main.parseArgs(Array.empty).isLeft)
+  test("no arguments returns NoArgs"):
+    assertEquals(Main.parseArgs(Array.empty), Right(Action.NoArgs))
 
   test("banner text only"):
-    assertEquals(Main.parseArgs(Array("HT-California-02")), Right(Action.Run(Config("HT-California-02", None, ColorMode.Auto))))
+    assertEquals(Main.parseArgs(Array("HT-California-02")), Right(Action.Run(Config("HT-California-02", None, ColorMode.Detect))))
 
   test("banner text with --greeting"):
     assertEquals(
       Main.parseArgs(Array("--greeting", "Plenty of room at the", "HT-California-02")),
-      Right(Action.Run(Config("HT-California-02", Some("Plenty of room at the"), ColorMode.Auto))),
+      Right(Action.Run(Config("HT-California-02", Some("Plenty of room at the"), ColorMode.Detect))),
     )
 
   test("greeting after banner text"):
     assertEquals(
       Main.parseArgs(Array("HT-California-02", "--greeting", "You can check out any time you like")),
-      Right(Action.Run(Config("HT-California-02", Some("You can check out any time you like"), ColorMode.Auto))),
+      Right(Action.Run(Config("HT-California-02", Some("You can check out any time you like"), ColorMode.Detect))),
     )
 
   // ### --color flag ###
@@ -38,15 +38,15 @@ class BannerCliSpec extends BannerSuite:
       Right(Action.Run(Config("HT-California-02", None, ColorMode.On))),
     )
 
-  test("--color auto is the default"):
+  test("--color detect is the default"):
     assertEquals(
-      Main.parseArgs(Array("--color", "auto", "HT-California-02")),
-      Right(Action.Run(Config("HT-California-02", None, ColorMode.Auto))),
+      Main.parseArgs(Array("--color", "detect", "HT-California-02")),
+      Right(Action.Run(Config("HT-California-02", None, ColorMode.Detect))),
     )
 
-  test("default color mode is Auto"):
+  test("default color mode is Detect"):
     val Right(Action.Run(config)) = Main.parseArgs(Array("HT-California-02")): @unchecked
-    assertEquals(config.colorMode, ColorMode.Auto)
+    assertEquals(config.colorMode, ColorMode.Detect)
 
   test("invalid --color value"):
     assert(Main.parseArgs(Array("--color", "maybe", "HT-California-02")).isLeft)
@@ -60,8 +60,8 @@ class BannerCliSpec extends BannerSuite:
       Right(Action.Help(ColorMode.Off)),
     )
 
-  test("--help returns Help with Auto color"):
-    assertEquals(Main.parseArgs(Array("--help")), Right(Action.Help(ColorMode.Auto)))
+  test("--help returns Help with Detect color"):
+    assertEquals(Main.parseArgs(Array("--help")), Right(Action.Help(ColorMode.Detect)))
 
   // ### --version flag ###
 
@@ -182,7 +182,7 @@ class BannerCliSpec extends BannerSuite:
   test("plain help has no escape codes"):
     val output = Main.help(false)
     assert(!output.contains("\u001b"), "plain help should not contain escape codes")
-    assert(output.contains("--color <auto|on|off>"), "should document --color flag")
+    assert(output.contains("--color <detect|on|off>"), "should document --color flag")
     assert(output.contains("--version"), "should document --version flag")
     assert(output.contains(EmbeddedResources.version), "should contain version")
     assert(output.contains("https://github.com/github/melezov/server-banner"), "should contain project URL")
@@ -190,7 +190,7 @@ class BannerCliSpec extends BannerSuite:
   test("colored help has ANSI escape codes"):
     val output = Main.help(true)
     assert(output.contains("\u001b["), "colored help should contain ANSI escape codes")
-    assert(output.contains("--color <auto|on|off>"), "should document --color flag")
+    assert(output.contains("--color <detect|on|off>"), "should document --color flag")
     assert(output.contains("--version"), "should document --version flag")
     assert(output.contains(Color.Yellow.ansiCode), "should contain yellow for headers")
     assert(output.contains(Color.Green.ansiCode), "should contain green for options")
