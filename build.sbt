@@ -9,7 +9,7 @@ lazy val target = crossProject(NativePlatform, JVMPlatform)
   .settings(
     organization := "com.github.melezov",
     name := "server-banner",
-    version := "0.1.0-SNAPSHOT",
+    version := "0.1.0",
 
     scalacOptions ++= Seq(
       "-deprecation",

@@ -2,7 +2,8 @@
 
 # server-banner
 
-> **S**cala **E**ngineered **R**enderer **V**astly **E**xceeding **R**equirements — **B**ecause **A**SCII **N**ever **N**eeded **E**xtensive **R**ationale
+>**S**cala **E**ngineered **R**enderer **V**astly **E**xceeding **R**equirements\
+**B**ecause **A**SCII **N**ever **N**eeded **E**xtensive **R**ationale
 
 A Scala Native CLI tool that generates ASCII art server banners with FIGlet-style Slant font rendering, decorative scroll borders, and optional greeting text. Compiles to a single native binary — no JVM required.
 
@@ -11,13 +12,10 @@ A Scala Native CLI tool that generates ASCII art server banners with FIGlet-styl
 Requires [SBT](https://www.scala-sbt.org/) and [LLVM/Clang](https://scala-native.org/en/stable/user/setup.html) (for Scala Native compilation).
 
 ```bash
-# Debug build (fast compilation)
-sbt nativeLink
-
-# Release build (optimized for size, UPX compressed if available)
+# Release build (produces a native binary)
 sbt release
 
-# Standalone JVM fat JAR (ProGuard-shrunk, requires only a Java 17+ runtime)
+# Standalone fat JAR (requires a Java 17+ runtime)
 sbt targetJVM/release
 ```
 
@@ -31,17 +29,6 @@ sbt test
 
 ## Usage
 
-```bash
-# Banner with greeting
-server-banner --greeting 'Such  a  *lovely*  place' My-Server
-
-# Banner only
-server-banner My-Server
-
-# Default demo banner + help
-server-banner
-```
-
 ```
 Usage: server-banner [OPTIONS] <banner-text>
 
@@ -49,11 +36,23 @@ Arguments:
   <banner-text>            Text to render as ASCII art banner
 
 Options:
+  --version                Print version and exit
+  --help                   Show this help message
   --greeting <text>        Greeting text displayed above the banner
+  --color <detect|on|off>  Color output mode (default: detect)
+```
 
-Examples:
-  server-banner My-Server
-  server-banner --greeting 'Such  a  *lovely*  place' My-Server
+## Examples
+
+```bash
+# Default demo banner + help
+server-banner --help
+
+# Banner only, no ANSI coloring
+server-banner --color off My-Server
+
+# Banner with greeting
+server-banner --greeting 'Such  a  *lovely*  place' HT-Cal-4N
 ```
 
 ## Installing as a Linux MOTD
@@ -68,39 +67,22 @@ Cross-compile on Linux (or build directly on the target server):
 sbt release
 ```
 
-### 2. Copy to the server
+### 2. Move it so that it's locally available
 
 ```bash
-scp target/scala-3.8.1/server-banner user@server:/usr/local/bin/server-banner
-ssh user@server 'chmod +x /usr/local/bin/server-banner'
+sudo mv release/server-banner /usr/local/bin/
 ```
 
 ### 3. Generate the banner
 
 ```bash
-ssh user@server 'server-banner --greeting "Such  a  *lovely*  place" HT-Cal-4N > /etc/motd'
+server-banner --color on --greeting "Such a *lovely* place" HT-Cal-4N | sudo tee /etc/motd
 ```
 
 This writes the static banner text into `/etc/motd`, which is displayed by the SSH daemon on login.
+Note on the usage of tee to elevate writing to `/etc/motd`, as well as forcing color on a pipe.
 
-### 4. Dynamic MOTD (optional)
-
-For banners that update dynamically (e.g., including hostname or date), create a script in `/etc/update-motd.d/` instead:
-
-```bash
-cat <<'SCRIPT' | ssh user@server 'sudo tee /etc/update-motd.d/10-server-banner && sudo chmod +x /etc/update-motd.d/10-server-banner'
-#!/bin/sh
-/usr/local/bin/server-banner --greeting 'Such  a  *lovely*  place' "$(hostname)"
-SCRIPT
-```
-
-On systems that support `update-motd` (Debian, Ubuntu), this script runs on each login. Make sure to disable the default static MOTD if using this approach:
-
-```bash
-ssh user@server 'sudo truncate -s 0 /etc/motd'
-```
-
-### 5. Verify
+### 4. Verify
 
 ```bash
 ssh user@server
@@ -109,16 +91,16 @@ ssh user@server
 You should see the banner on login:
 
 ```
-                                                             .---.
-                                                            /  .  \
-        S U C H   A   * L O V E L Y *   P L A C E          |\_/|  /|
-  _________________________________________________________|___|_' |
+                                                              .---.
+                                                             /  .  \
+        S U C H   A   * L O V E L Y *   P L A C E           |\_/|  /|
+  __________________________________________________________|___|_' |
  /  .-.        __  ________    ______      __      __ __  _   __    |
 |  /   \      / / / /_  __/   / ____/___ _/ /     / // / / | / /    |
 | |\_.  |    / /_/ / / /_____/ /   / __ `/ /_____/ // /_/  |/ /     |
 |\|  | /|   / __  / / /_____/ /___/ /_/ / /_____/__  __/ /|  /      |
 | `---' |  /_/ /_/ /_/      \____/\__,_/_/        /_/ /_/ |_/       |
-|       |_________________________________________________________/
+|       |__________________________________________________________/
 |       |
  \     /
   `---'
@@ -127,8 +109,7 @@ You should see the banner on login:
 ### Troubleshooting
 
 - **Banner not showing on SSH login**: Ensure `PrintMotd yes` is set in `/etc/ssh/sshd_config` and restart sshd (`sudo systemctl restart sshd`).
-- **Dynamic MOTD not running**: Check that `pam_motd.so` is enabled in `/etc/pam.d/sshd` and that your script is executable.
-- **Duplicate banners**: If you see the banner twice, you may have both `/etc/motd` and an `update-motd.d` script active — use one or the other.
+- **Duplicate banners**: If you see the banner twice, you may have both `/etc/motd` and a `pam_motd.so` script active — use one or the other.
 
 ## License
 
